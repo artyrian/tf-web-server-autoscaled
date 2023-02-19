@@ -2,19 +2,11 @@ provider "aws" {
   region  = var.aws_region
 }
 
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc
-resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
-}
-output "vpc_cidr_block" {
-  value = aws_vpc.main.cidr_block
-}
-
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group
 resource "aws_security_group" "web_sec_group" {
-  name        = "web_sec_group"
+  name        = "web_vpc_sec_group"
   description = "web security group"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = aws_default_vpc.default_vpc.id
   ingress {
     from_port = 80
     to_port = 80
@@ -50,7 +42,7 @@ resource "aws_autoscaling_group" "web" {
   max_size             = 2
   min_elb_capacity     = 2
   health_check_type    = "ELB"
-  vpc_zone_identifier  = [aws_default_subnet.default_az1.id, aws_default_subnet.default_az2.id]
+  vpc_zone_identifier  = [aws_default_subnet.default_az1.id, aws_default_subnet.default_az1.id]
   load_balancers       = [aws_elb.web.name]
 
   lifecycle {
