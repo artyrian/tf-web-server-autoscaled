@@ -2,12 +2,19 @@ provider "aws" {
   region  = var.aws_region
 }
 
-resource "aws_default_vpc" "default" {}
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+}
+output "vpc_cidr_block" {
+  value = aws_vpc.main.cidr_block
+}
 
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group
 resource "aws_security_group" "web_sec_group" {
   name        = "web_sec_group"
   description = "web security group"
-  vpc_id      = aws_default_vpc.default.id
+  vpc_id      = aws_vpc.main.id
   ingress {
     from_port = 80
     to_port = 80
@@ -22,6 +29,7 @@ resource "aws_security_group" "web_sec_group" {
   }
 }
 
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_configuration
 resource "aws_launch_configuration" "web" {
   name_prefix     = "web-high-lc-"
   image_id        = data.aws_ami.latest_amazon_linux.id
@@ -34,6 +42,7 @@ resource "aws_launch_configuration" "web" {
   }
 }
 
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group
 resource "aws_autoscaling_group" "web" {
   name                 = "autoscale_group"
   launch_configuration = aws_launch_configuration.web.name
@@ -60,6 +69,7 @@ resource "aws_autoscaling_group" "web" {
   }
 }
 
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/elb
 resource "aws_elb" "web" {
   name               = "web-elb"
   availability_zones = [data.aws_availability_zones.available.names[0], data.aws_availability_zones.available.names[1]]
